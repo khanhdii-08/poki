@@ -1,0 +1,75 @@
+package com.remake.poki.model;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+import java.time.LocalDateTime;
+
+@Entity
+@Table(name = "users")
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+public class User {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    private String name;
+
+    private String password;
+    private String password2;
+
+    private String user;
+    @Column(name = "last_energy_update")
+    private LocalDateTime lastEnergyUpdate;
+    private int energy = 150;
+    private int energyFull;
+    private int lever;
+    private int exp = 500;
+    private int expCurrent=10;
+    private int gold = 10000;
+    private int ruby = 1000;
+    private int requestAttack = 500;
+    private int wheel = 3;
+    private int wheelDay = 3;
+    private int starWhite = 0;
+    private int starBlue = 0;
+    private int starRed = 0;
+    private Long petId;
+    private Long avtId;
+    private String blind = "N";
+    @Column(name = "device_id")
+    private String deviceId;
+
+    @Column(name = "device_name")
+    private String deviceName;
+
+    @Column(name = "last_login")
+    private LocalDateTime lastLogin;
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private LocalDateTime createdAt;
+
+    // ⭐ THÊM ANNOTATION NÀY:
+    @PrePersist
+    protected void onCreate() {
+        if (createdAt == null) {
+            createdAt = LocalDateTime.now();
+        }
+        if (lastEnergyUpdate == null) {
+            lastEnergyUpdate = LocalDateTime.now();
+        }
+    }
+
+}
