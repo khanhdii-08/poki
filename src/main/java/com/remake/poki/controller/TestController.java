@@ -6,7 +6,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 public class TestController extends BaseController {
 
-    @GetMapping("/test")
+    @GetMapping(V1 + "/test")
     public String test() {
         return "test";
     }
