@@ -16,7 +16,6 @@ public class WebSocketConfiguration implements WebSocketMessageBrokerConfigurer 
 
     private final WSChannelInterceptor wsChannelInterceptor;
 
-
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         registry.addEndpoint("/ws").setAllowedOriginPatterns("*");
