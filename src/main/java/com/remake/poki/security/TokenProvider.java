@@ -45,6 +45,13 @@ public class TokenProvider {
         return null;
     }
 
+    public String resolveToken(String bearerToken) {
+        if (StringUtils.hasText(bearerToken) && bearerToken.startsWith(Constants.BEARER)) {
+            return bearerToken.substring(7);
+        }
+        return null;
+    }
+
     public boolean validateToken(String token) {
         try {
             Claims claims = Jwts.parser()
