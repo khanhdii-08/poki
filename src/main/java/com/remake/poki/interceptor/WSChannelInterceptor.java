@@ -1,4 +1,4 @@
-package com.remake.poki.config.websocket.interceptor;
+package com.remake.poki.interceptor;
 
 import com.remake.poki.i18n.I18nKeys;
 import com.remake.poki.security.TokenProvider;
@@ -11,9 +11,8 @@ import org.springframework.messaging.MessageChannel;
 import org.springframework.messaging.simp.stomp.StompCommand;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.messaging.support.ChannelInterceptor;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
-
-import java.security.Principal;
 
 @Slf4j
 @Component
@@ -32,10 +31,9 @@ public class WSChannelInterceptor implements ChannelInterceptor {
                 log.warn("STOMP unauthorized: cmd={}, sessionId={}, hasNativeAuth={}", accessor.getCommand(), accessor.getSessionId(), accessor.getFirstNativeHeader(Constants.AUTHORIZATION) != null);
                 throw new IllegalArgumentException(Utils.getMessage(I18nKeys.ERROR_UNAUTHORIZED));
             }
-            Long userId = tokenProvider.getUserIdFromToken(token);
-            Principal principal = () -> String.valueOf(userId);
-            accessor.setUser(principal);
-            log.info("STOMP CONNECT SUCCESSFUL: sessionId={}, userId={}", accessor.getSessionId(), userId);
+            Authentication authentication = tokenProvider.getAuthentication(token);
+            accessor.setUser(authentication);
+            log.info("STOMP CONNECT SUCCESSFUL: sessionId={}, authentication={}", accessor.getSessionId(), authentication);
         }
 
         if (StompCommand.SUBSCRIBE.equals(accessor.getCommand())) {

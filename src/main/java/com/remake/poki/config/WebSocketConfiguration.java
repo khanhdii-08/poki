@@ -1,6 +1,6 @@
-package com.remake.poki.config.websocket;
+package com.remake.poki.config;
 
-import com.remake.poki.config.websocket.interceptor.WSChannelInterceptor;
+import com.remake.poki.interceptor.WSChannelInterceptor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.simp.config.ChannelRegistration;

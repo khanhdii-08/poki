@@ -13,12 +13,15 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.server.ServerHttpRequest;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
 import org.springframework.util.MultiValueMap;
 import org.springframework.util.StringUtils;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import javax.crypto.SecretKey;
+import java.security.Principal;
 import java.util.List;
 
 @Slf4j
@@ -54,11 +57,7 @@ public class TokenProvider {
 
     public boolean validateToken(String token) {
         try {
-            Claims claims = Jwts.parser()
-                    .verifyWith(getSigningKey())
-                    .build()
-                    .parseSignedClaims(token)
-                    .getPayload();
+            Claims claims = getClaims(token);
 
             // Kiểm tra version của token
             String tokenVersion = claims.get("version", String.class);
@@ -83,14 +82,33 @@ public class TokenProvider {
         return false;
     }
 
+    public Authentication getAuthentication(String token) {
+        /*
+         * Currently not use
+         * */
+//        Claims claims = getClaims(token);
+//        Collection<? extends GrantedAuthority> authorities = Arrays
+//                .stream(claims.get(Constants.AUTHORIZATION).toString().split(","))
+//                .filter(auth -> !auth.trim().isEmpty())
+//                .map(SimpleGrantedAuthority::new)
+//                .collect(Collectors.toList());
+//
+//        User principal = new User(claims.getSubject(), "", authorities);
+        Principal principal = () -> String.valueOf(getUserIdFromToken(token));
+        return new UsernamePasswordAuthenticationToken(principal, null, null);
+    }
+
     public Long getUserIdFromToken(String token) {
-        Claims claims = Jwts.parser()
+        Claims claims = getClaims(token);
+        return Long.parseLong(claims.getSubject());
+    }
+
+    private Claims getClaims(String token) {
+        return Jwts.parser()
                 .verifyWith(getSigningKey())
                 .build()
                 .parseSignedClaims(token)
                 .getPayload();
-
-        return Long.parseLong(claims.getSubject());
     }
 
     private String getCurrentTokenVersion() {
