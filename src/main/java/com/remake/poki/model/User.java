@@ -1,9 +1,8 @@
 package com.remake.poki.model;
 
+import com.remake.poki.persistence.id.SecureRandomId;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
@@ -23,14 +22,12 @@ import java.time.LocalDateTime;
 public class User {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @SecureRandomId
+    @Column(nullable = false, updatable = false)
     private Long id;
-
     private String name;
-
     private String password;
     private String password2;
-
     private String user;
     @Column(name = "last_energy_update")
     private LocalDateTime lastEnergyUpdate;
@@ -38,7 +35,7 @@ public class User {
     private int energyFull;
     private int lever;
     private int exp = 500;
-    private int expCurrent=10;
+    private int expCurrent = 10;
     private int gold = 10000;
     private int ruby = 1000;
     private int requestAttack = 500;
@@ -50,6 +47,11 @@ public class User {
     private Long petId;
     private Long avtId;
     private String blind = "N";
+    private int atk;
+    private int hp;
+    private int mana;
+    @Column(name = "weapons_id")
+    private Long weaponsId;
     @Column(name = "device_id")
     private String deviceId;
 
