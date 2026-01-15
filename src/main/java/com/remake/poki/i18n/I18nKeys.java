@@ -21,4 +21,13 @@ public class I18nKeys {
     /** error.business=Business conflict. */
     public static final String ERROR_BUSINESS = "error.business";
 
+    /** error.service_unavailable=The server is temporarily unavailable. Please come back after 7:00 AM. */
+    public static final String ERROR_SERVICE_UNAVAILABLE = "error.service_unavailable";
+
+    /** error.upgrade_required=The application version has expired. Please update to continue. */
+    public static final String ERROR_UPGRADE_REQUIRED = "error.upgrade_required";
+
+    /** error.auth.invalid_credentials=Invalid username or password. */
+    public static final String ERROR_AUTH_INVALID_CREDENTIALS = "error.auth.invalid_credentials";
+
 }

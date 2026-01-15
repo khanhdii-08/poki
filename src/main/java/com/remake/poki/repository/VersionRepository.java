@@ -9,5 +9,7 @@ import java.util.Optional;
 @Repository
 public interface VersionRepository extends JpaRepository<Version, Long> {
 
-    Optional<Version> findFirstByOrderByIdDesc();
+    Optional<Version> findByVersionAndIsActiveTrue(String version);
+
+    Optional<Version> findByIsActiveTrue();
 }

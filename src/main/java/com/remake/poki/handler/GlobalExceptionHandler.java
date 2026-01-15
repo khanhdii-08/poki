@@ -1,6 +1,7 @@
 package com.remake.poki.handler;
 
 import com.github.f4b6a3.ulid.UlidCreator;
+import com.remake.poki.handler.exceptions.ApiException;
 import com.remake.poki.handler.exceptions.BadRequestException;
 import com.remake.poki.handler.exceptions.BusinessException;
 import com.remake.poki.handler.exceptions.ForbiddenException;
@@ -34,7 +35,7 @@ public class GlobalExceptionHandler {
         String errorId = UlidCreator.getUlid().toString();
         log.error("Unexpected error. errorId={}, uri={}", errorId, request.getRequestURI(), ex);
         ErrorMessage errorMessage = new ErrorMessage(Utils.getMessage(I18nKeys.ERROR_SYSTEM_UNEXPECTED));
-        ErrorResponse errorResponse = new ErrorResponse(request.getRequestURI(), errorId, errorMessage);
+        ErrorResponse errorResponse = new ErrorResponse(errorId, errorMessage);
         return ResponseEntity.internalServerError().body(errorResponse);
     }
 
@@ -43,7 +44,7 @@ public class GlobalExceptionHandler {
         String errorId = UlidCreator.getUlid().toString();
         log.info("NoResourceFound. errorId={}, uri={}, msg={}", errorId, request.getRequestURI(), ex.getMessage());
         ErrorMessage errorMessage = new ErrorMessage(ex.getMessage());
-        ErrorResponse errorResponse = new ErrorResponse(request.getRequestURI(), errorId, errorMessage);
+        ErrorResponse errorResponse = new ErrorResponse(errorId, errorMessage);
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
     }
 
@@ -52,7 +53,7 @@ public class GlobalExceptionHandler {
         String errorId = UlidCreator.getUlid().toString();
         log.warn("MethodNotSupported. errorId={}, uri={}, msg={}", errorId, request.getRequestURI(), ex.getMessage());
         ErrorMessage errorMessage = new ErrorMessage(ex.getMessage());
-        ErrorResponse errorResponse = new ErrorResponse(request.getRequestURI(), errorId, errorMessage);
+        ErrorResponse errorResponse = new ErrorResponse(errorId, errorMessage);
         return ResponseEntity.status(HttpStatus.METHOD_NOT_ALLOWED).body(errorResponse);
     }
 
@@ -61,7 +62,7 @@ public class GlobalExceptionHandler {
         String errorId = UlidCreator.getUlid().toString();
         log.warn("BadRequest. errorId={}, uri={}, msg={}", errorId, request.getRequestURI(), ex.getMessage());
         ErrorMessage errorMessage = new ErrorMessage(ex.getMessage());
-        ErrorResponse errorResponse = new ErrorResponse(request.getRequestURI(), errorId, errorMessage);
+        ErrorResponse errorResponse = new ErrorResponse(errorId, errorMessage);
         return ResponseEntity.badRequest().body(errorResponse);
     }
 
@@ -70,7 +71,7 @@ public class GlobalExceptionHandler {
         String errorId = UlidCreator.getUlid().toString();
         log.info("NotFound. errorId={}, uri={}, msg={}", errorId, request.getRequestURI(), ex.getMessage());
         ErrorMessage errorMessage = new ErrorMessage(ex.getMessage());
-        ErrorResponse errorResponse = new ErrorResponse(request.getRequestURI(), errorId, errorMessage);
+        ErrorResponse errorResponse = new ErrorResponse(errorId, errorMessage);
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
     }
 
@@ -79,7 +80,7 @@ public class GlobalExceptionHandler {
         String errorId = UlidCreator.getUlid().toString();
         log.error("ServiceException. errorId={}, uri={}", errorId, request.getRequestURI(), ex);
         ErrorMessage errorMessage = new ErrorMessage(ex.getMessage());
-        ErrorResponse errorResponse = new ErrorResponse(request.getRequestURI(), errorId, errorMessage);
+        ErrorResponse errorResponse = new ErrorResponse(errorId, errorMessage);
         return ResponseEntity.internalServerError().body(errorResponse);
     }
 
@@ -94,7 +95,7 @@ public class GlobalExceptionHandler {
                 .sorted(Comparator.comparing((ErrorMessage e) -> e.getErrorKey() == null ? "" : e.getErrorKey())
                         .thenComparing(e -> e.getMessage() == null ? "" : e.getMessage()))
                 .toList();
-        ErrorResponse errorResponse = new ErrorResponse(request.getRequestURI(), errorId, listErrorMessage);
+        ErrorResponse errorResponse = new ErrorResponse(errorId, listErrorMessage);
         return ResponseEntity.unprocessableEntity().body(errorResponse);
     }
 
@@ -103,7 +104,7 @@ public class GlobalExceptionHandler {
         String errorId = UlidCreator.getUlid().toString();
         log.warn("ValidationException. errorId={}, uri={}, msg={}", errorId, request.getRequestURI(), ex.getMessage());
         ErrorMessage errorMessage = new ErrorMessage(ex.getMessage());
-        ErrorResponse errorResponse = new ErrorResponse(request.getRequestURI(), errorId, errorMessage);
+        ErrorResponse errorResponse = new ErrorResponse(errorId, errorMessage);
         return ResponseEntity.unprocessableEntity().body(errorResponse);
     }
 
@@ -112,7 +113,7 @@ public class GlobalExceptionHandler {
         String errorId = UlidCreator.getUlid().toString();
         log.warn("Unauthorized. errorId={}, uri={}, msg={}", errorId, request.getRequestURI(), ex.getMessage());
         ErrorMessage errorMessage = new ErrorMessage(ex.getMessage());
-        ErrorResponse errorResponse = new ErrorResponse(request.getRequestURI(), errorId, errorMessage);
+        ErrorResponse errorResponse = new ErrorResponse(errorId, errorMessage);
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse);
     }
 
@@ -121,7 +122,7 @@ public class GlobalExceptionHandler {
         String errorId = UlidCreator.getUlid().toString();
         log.warn("Forbidden. errorId={}, uri={}, msg={}", errorId, request.getRequestURI(), ex.getMessage());
         ErrorMessage errorMessage = new ErrorMessage(ex.getMessage());
-        ErrorResponse errorResponse = new ErrorResponse(request.getRequestURI(), errorId, errorMessage);
+        ErrorResponse errorResponse = new ErrorResponse(errorId, errorMessage);
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(errorResponse);
     }
 
@@ -130,8 +131,17 @@ public class GlobalExceptionHandler {
         String errorId = UlidCreator.getUlid().toString();
         log.warn("BusinessException. errorId={}, uri={}, msg={}", errorId, request.getRequestURI(), ex.getMessage());
         ErrorMessage errorMessage = new ErrorMessage(ex.getMessage());
-        ErrorResponse errorResponse = new ErrorResponse(request.getRequestURI(), errorId, errorMessage);
+        ErrorResponse errorResponse = new ErrorResponse(errorId, errorMessage);
         return ResponseEntity.status(HttpStatus.CONFLICT).body(errorResponse);
+    }
+
+    @ExceptionHandler(ApiException.class)
+    public ResponseEntity<ErrorResponse> handleApiException(ApiException ex, HttpServletRequest request) {
+        String errorId = UlidCreator.getUlid().toString();
+        log.warn("AppException. errorId={}, uri={}, msg={}", errorId, request.getRequestURI(), ex.getMessage());
+        ErrorMessage errorMessage = new ErrorMessage(ex.getMessage());
+        ErrorResponse errorResponse = new ErrorResponse(errorId, errorMessage);
+        return ResponseEntity.status(ex.getStatus()).body(errorResponse);
     }
 }
 

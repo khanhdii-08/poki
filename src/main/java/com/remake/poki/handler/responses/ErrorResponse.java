@@ -20,14 +20,12 @@ public class ErrorResponse {
     private String errorId;
     private List<ErrorMessage> errors;
 
-    public ErrorResponse(String path, String errorId, List<ErrorMessage> errors) {
-        this.path = path;
+    public ErrorResponse(String errorId, List<ErrorMessage> errors) {
         this.errorId = errorId;
         this.errors = errors;
     }
 
-    public ErrorResponse(String path, String errorId, ErrorMessage errorMessage) {
-        this.path = path;
+    public ErrorResponse(String errorId, ErrorMessage errorMessage) {
         this.errorId = errorId;
         this.errors = Collections.singletonList(errorMessage);
     }

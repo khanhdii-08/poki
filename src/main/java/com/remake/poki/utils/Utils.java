@@ -1,6 +1,8 @@
 package com.remake.poki.utils;
 
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.context.i18n.LocaleContextHolder;
+import org.springframework.util.StringUtils;
 
 import java.text.MessageFormat;
 import java.util.Locale;
@@ -22,5 +24,52 @@ public class Utils {
             return key;
         }
     }
+
+    public static String getDeviceId(String deviceId, HttpServletRequest httpRequest) {
+        // Ưu tiên lấy từ LoginDTO nếu Unity client gửi lên
+        if (StringUtils.hasText(deviceId)) {
+            return deviceId;
+        }
+
+        // Fallback: Tạo device ID từ User-Agent + IP
+        String userAgent = httpRequest.getHeader("User-Agent");
+        String ip = getClientIp(httpRequest);
+        return generateDeviceId(userAgent, ip);
+    }
+
+    private static String generateDeviceId(String userAgent, String ip) {
+        String combined = (userAgent != null ? userAgent : "unknown") + "_" + ip;
+        return String.valueOf(combined.hashCode());
+    }
+
+    public static String getClientIp(HttpServletRequest request) {
+        String xForwardedFor = request.getHeader("X-Forwarded-For");
+        if (xForwardedFor != null && !xForwardedFor.isEmpty()) {
+            return xForwardedFor.split(",")[0].trim();
+        }
+
+        String xRealIp = request.getHeader("X-Real-IP");
+        if (xRealIp != null && !xRealIp.isEmpty()) {
+            return xRealIp;
+        }
+
+        return request.getRemoteAddr();
+    }
+
+    public static String getDeviceName(String deviceName, HttpServletRequest httpRequest) {
+        if (StringUtils.hasText(deviceName)) {
+            return deviceName;
+        }
+        String userAgent = httpRequest.getHeader("User-Agent");
+        if (userAgent != null) {
+            if (userAgent.contains("Android")) return "Android Device";
+            if (userAgent.contains("iPhone")) return "iPhone";
+            if (userAgent.contains("iPad")) return "iPad";
+            if (userAgent.contains("Windows")) return "Windows PC";
+            if (userAgent.contains("Mac")) return "Mac";
+        }
+        return "Unknown Device";
+    }
+
 }
 
