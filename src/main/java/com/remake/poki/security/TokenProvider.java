@@ -1,5 +1,6 @@
 package com.remake.poki.security;
 
+import com.remake.poki.model.User;
 import com.remake.poki.model.Version;
 import com.remake.poki.repository.VersionRepository;
 import com.remake.poki.utils.Constants;
@@ -22,6 +23,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import javax.crypto.SecretKey;
 import java.security.Principal;
+import java.util.Date;
 import java.util.List;
 
 @Slf4j
@@ -33,6 +35,22 @@ public class TokenProvider {
     private String jwtSecret;
 
     private final VersionRepository versionRepository;
+
+    @Value("${app.jwt.expiration:86400000}")
+    private long jwtExpirationInMs;
+
+    public String generateTokenWithUser(User user, String version) {
+        Date now = new Date();
+        Date expiryDate = new Date(now.getTime() + jwtExpirationInMs);
+        return Jwts.builder()
+                .subject(String.valueOf(user.getId()))
+                .claim("username", user.getUser())
+                .claim("version", version)
+                .issuedAt(now)
+                .expiration(expiryDate)
+                .signWith(getSigningKey())
+                .compact();
+    }
 
     public String resolveToken(ServerHttpRequest request) {
         List<String> auths = request.getHeaders().get(Constants.AUTHORIZATION);
@@ -61,8 +79,7 @@ public class TokenProvider {
 
             // Kiểm tra version của token
             String tokenVersion = claims.get("version", String.class);
-            String currentVersion = getCurrentTokenVersion();
-
+            String currentVersion = getCurrentVersion();
             if (tokenVersion == null || !tokenVersion.equals(currentVersion)) {
                 log.error("Invalid token version. Token version: {}, Current version: {}", tokenVersion, currentVersion);
                 return false;
@@ -111,8 +128,8 @@ public class TokenProvider {
                 .getPayload();
     }
 
-    private String getCurrentTokenVersion() {
-        return versionRepository.findFirstByOrderByIdDesc().map(Version::getVersion).orElse("1.0.0"); // Default version nếu chưa có trong DB
+    private String getCurrentVersion() {
+        return versionRepository.findByIsActiveTrue().map(Version::getVersion).orElse("1.0.0"); // Default version nếu chưa có trong DB
     }
 
     private SecretKey getSigningKey() {

@@ -13,7 +13,7 @@ public class ApplicationConfig {
     @Bean
     public LocaleResolver localeResolver() {
         AcceptHeaderLocaleResolver localeResolver = new AcceptHeaderLocaleResolver();
-        localeResolver.setDefaultLocale(Locale.US); // Set the default locale if none is specified
+        localeResolver.setDefaultLocale(new Locale("vi", "VN")); // Set the default locale if none is specified
         return localeResolver;
     }
 }
