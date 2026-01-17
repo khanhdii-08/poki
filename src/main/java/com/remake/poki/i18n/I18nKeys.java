@@ -30,4 +30,7 @@ public class I18nKeys {
     /** error.auth.invalid_credentials=Invalid username or password. */
     public static final String ERROR_AUTH_INVALID_CREDENTIALS = "error.auth.invalid_credentials";
 
+    /** error.auth.session_kicked=Your account has been signed in on another device. Please sign in again. */
+    public static final String ERROR_AUTH_SESSION_KICKED = "error.auth.session_kicked";
+
 }

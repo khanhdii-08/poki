@@ -15,8 +15,8 @@ import java.util.List;
 @ToString
 public class ErrorResponse {
 
-    private String path;
     @JsonInclude(JsonInclude.Include.NON_NULL)
+    private String path;
     private String errorId;
     private List<ErrorMessage> errors;
 

@@ -1,6 +1,6 @@
 package com.remake.poki.utils;
 
-public class Constants {
+public final class Constants {
 
     public static final String BUNDLE_NAME = "i18n/messages";
     public static String AUTHORIZATION = "Authorization";
