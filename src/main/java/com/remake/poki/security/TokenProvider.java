@@ -10,21 +10,17 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.MalformedJwtException;
 import io.jsonwebtoken.UnsupportedJwtException;
 import io.jsonwebtoken.security.Keys;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.server.ServerHttpRequest;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
-import org.springframework.util.MultiValueMap;
 import org.springframework.util.StringUtils;
-import org.springframework.web.util.UriComponentsBuilder;
 
 import javax.crypto.SecretKey;
-import java.security.Principal;
 import java.util.Date;
-import java.util.List;
 
 @Slf4j
 @Component
@@ -52,14 +48,12 @@ public class TokenProvider {
                 .compact();
     }
 
-    public String resolveToken(ServerHttpRequest request) {
-        List<String> auths = request.getHeaders().get(Constants.AUTHORIZATION);
-        String bearerToken = (auths != null && !auths.isEmpty()) ? auths.get(0) : null;
+    public String resolveToken(HttpServletRequest request) {
+        String bearerToken = request.getHeader(Constants.AUTHORIZATION);
         if (StringUtils.hasText(bearerToken) && bearerToken.startsWith(Constants.BEARER)) {
             return bearerToken.substring(7);
         }
-        MultiValueMap<String, String> params = UriComponentsBuilder.fromUri(request.getURI()).build().getQueryParams();
-        String jwt = params.getFirst(Constants.TOKEN);
+        String jwt = request.getParameter(Constants.AUTHORIZATION);
         if (StringUtils.hasText(jwt)) {
             return jwt;
         }
@@ -111,8 +105,8 @@ public class TokenProvider {
 //                .collect(Collectors.toList());
 //
 //        User principal = new User(claims.getSubject(), "", authorities);
-        Principal principal = () -> String.valueOf(getUserIdFromToken(token));
-        return new UsernamePasswordAuthenticationToken(principal, null, null);
+//        Principal principal = () -> String.valueOf(getUserIdFromToken(token));
+        return new UsernamePasswordAuthenticationToken(getUserIdFromToken(token), null, null);
     }
 
     public Long getUserIdFromToken(String token) {

@@ -11,6 +11,7 @@ import org.springframework.messaging.MessageChannel;
 import org.springframework.messaging.simp.stomp.StompCommand;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.messaging.support.ChannelInterceptor;
+import org.springframework.messaging.support.MessageHeaderAccessor;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
 
@@ -23,8 +24,8 @@ public class WSChannelInterceptor implements ChannelInterceptor {
 
     @Override
     public Message<?> preSend(Message<?> message, MessageChannel channel) {
-        StompHeaderAccessor accessor = StompHeaderAccessor.wrap(message);
-        if (StompCommand.CONNECT.equals(accessor.getCommand())) {
+        StompHeaderAccessor accessor = MessageHeaderAccessor.getAccessor(message, StompHeaderAccessor.class);
+        if (accessor != null && StompCommand.CONNECT.equals(accessor.getCommand())) {
             String authHeader = accessor.getFirstNativeHeader(Constants.AUTHORIZATION);
             String token = tokenProvider.resolveToken(authHeader);
             if (token == null || !tokenProvider.validateToken(token)) {
@@ -33,17 +34,8 @@ public class WSChannelInterceptor implements ChannelInterceptor {
             }
             Authentication authentication = tokenProvider.getAuthentication(token);
             accessor.setUser(authentication);
-            log.info("STOMP CONNECT SUCCESSFUL: sessionId={}, authentication={}", accessor.getSessionId(), authentication);
+            log.info("STOMP CONNECT: sessionId={}, userId={}", accessor.getSessionId(), authentication.getName());
         }
-
-        if (StompCommand.SUBSCRIBE.equals(accessor.getCommand())) {
-            log.debug("STOMP SUBSCRIBE: sessionId={}, userId={}, dest={}", accessor.getSessionId(), accessor.getUser() != null ? accessor.getUser().getName() : null, accessor.getDestination());
-        }
-
-        if (StompCommand.DISCONNECT.equals(accessor.getCommand())) {
-            log.info("STOMP DISCONNECT: sessionId={}", accessor.getSessionId());
-        }
-
         return message;
     }
 }

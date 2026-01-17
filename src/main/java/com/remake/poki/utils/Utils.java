@@ -2,21 +2,50 @@ package com.remake.poki.utils;
 
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.context.i18n.LocaleContextHolder;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.util.StringUtils;
 
 import java.text.MessageFormat;
 import java.util.Locale;
 import java.util.MissingResourceException;
+import java.util.Optional;
 import java.util.ResourceBundle;
 
 public class Utils {
+
+    public static Optional<Long> getCurrentUserLogin() {
+        SecurityContext securityContext = SecurityContextHolder.getContext();
+        return Optional.ofNullable(extractPrincipal(securityContext.getAuthentication()));
+    }
+
+    private static Long extractPrincipal(Authentication authentication) {
+        if (authentication == null) {
+            return null;
+        } else if (authentication.getPrincipal() instanceof UserDetails springSecurityUser) {
+            return Long.parseLong(springSecurityUser.getUsername());
+        } else if (authentication.getPrincipal() instanceof Long) {
+            return (Long) authentication.getPrincipal();
+        }
+        return null;
+    }
 
     public static String getMessage(String translationKey) {
         return getMessage(translationKey, (Object) null);
     }
 
+    public static String getMessage(String translationKey, Locale locale) {
+        return getMessage(translationKey, locale, (Object) null);
+    }
+
     public static String getMessage(String key, Object... args) {
         Locale locale = LocaleContextHolder.getLocale();
+        return getMessage(key, locale, args);
+    }
+
+    public static String getMessage(String key, Locale locale, Object... args) {
         try {
             String pattern = ResourceBundle.getBundle(Constants.BUNDLE_NAME, locale).getString(key);
             return (args == null || args.length == 0) ? pattern : MessageFormat.format(pattern, args);
