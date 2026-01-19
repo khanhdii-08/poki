@@ -32,7 +32,6 @@ public class OnlineUserService {
             onlineUserMap.put(userId, onlineUserMapper.toDto(user));
             sendOnlineUsers(userId);
         });
-
     }
 
     public void removeOnlineUser(Long userId) {
@@ -40,44 +39,13 @@ public class OnlineUserService {
         sendOnlineUsers();
     }
 
-    public void setUserChannelId(Long userId, Long channelId) {
-        OnlineUserDTO user = onlineUserMap.computeIfAbsent(userId, key -> new OnlineUserDTO());
-        user.setChannelId(channelId);
-    }
-
-    public void setUserRoomId(Long userId, Long roomId) {
-        OnlineUserDTO user = onlineUserMap.computeIfAbsent(userId, key -> new OnlineUserDTO());
-        user.setRoomId(roomId);
-    }
-
-    public void setUserInMatch(Long userId, boolean inMatch) {
-        OnlineUserDTO user = onlineUserMap.computeIfAbsent(userId, key -> new OnlineUserDTO());
-        user.setInMatch(inMatch);
-    }
-
     /**
      * Lấy danh sách user có thể mời (available)
-     * - Không trong phòng (roomId == null)
-     * - Không trong match (inMatch == false)
      * - Không phải chính user hiện tại
      */
-    public List<OnlineUserDTO> getAvailableOnlineUsers() {
+    public List<OnlineUserDTO> getAvailableOnlineUsersExcludeCurrentUser() {
         Long userId = Utils.getCurrentUserLogin().orElseThrow(() -> new UnauthorizedException(Utils.getMessage(I18nKeys.ERROR_UNAUTHORIZED)));
         return getAvailableOnlineUsers(userId);
-    }
-
-    /**
-     * Lấy danh sách user có thể mời (available)
-     * - Không trong phòng (roomId == null)
-     * - Không trong match (inMatch == false)
-     * - Không phải chính user hiện tại
-     */
-    public List<OnlineUserDTO> getAvailableOnlineUsers(Long excludeUserId) {
-        return onlineUserMap.values().stream()
-                .filter(user -> !user.getUserId().equals(excludeUserId))
-                .filter(user -> user.getRoomId() == null)
-                .filter(user -> !user.isInMatch())
-                .collect(Collectors.toList());
     }
 
     public List<OnlineUserDTO> getAllOnlineUsers() {
@@ -97,8 +65,13 @@ public class OnlineUserService {
     }
 
     private void sendOnlineUsers(Long excludeUserId) {
-        onlineUserMap.keySet().stream()
-                .filter(userId -> !userId.equals(excludeUserId))
-                .forEach(userId -> messenger.sendSyncToUser(userId, WsTopics.ONLINE_USERS, getAvailableOnlineUsers(userId)));
+        onlineUserMap.keySet().stream().filter(userId -> !userId.equals(excludeUserId)).forEach(userId -> messenger.sendSyncToUser(userId, WsTopics.ONLINE_USERS, getAvailableOnlineUsers(userId)));
+    }
+
+    /**
+     * - Không phải chính user hiện tại
+     */
+    public List<OnlineUserDTO> getAvailableOnlineUsers(Long excludeUserId) {
+        return onlineUserMap.values().stream().filter(user -> !user.getUserId().equals(excludeUserId)).collect(Collectors.toList());
     }
 }

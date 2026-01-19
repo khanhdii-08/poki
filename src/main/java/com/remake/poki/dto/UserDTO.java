@@ -17,7 +17,6 @@ public class UserDTO implements Serializable {
     private int gold;
     private int ruby;
     private int requestAttack;
-    private int lever;
     private int level;
     private int exp;
     private int expCurrent;

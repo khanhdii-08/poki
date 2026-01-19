@@ -16,7 +16,7 @@ public class OnlineUserController extends BaseController {
     private final OnlineUserService onlineUserService;
 
     @PostMapping(root + V1 + "/online")
-    public List<OnlineUserDTO> getAvailableOnlineUsers() {
-        return onlineUserService.getAvailableOnlineUsers();
+    public List<OnlineUserDTO> getAvailableOnlineUsersExcludeCurrentUser() {
+        return onlineUserService.getAvailableOnlineUsersExcludeCurrentUser();
     }
 }

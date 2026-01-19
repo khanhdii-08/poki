@@ -12,9 +12,4 @@ import lombok.NoArgsConstructor;
 public class OnlineUserDTO {
     private Long userId;
     private String username;
-    private Long avtId;
-    private int level;
-    private boolean inMatch;
-    private Long roomId;
-    private Long channelId;
 }

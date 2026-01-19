@@ -1,5 +1,6 @@
 package com.remake.poki.listener;
 
+import com.remake.poki.service.ChatService;
 import com.remake.poki.service.OnlineUserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -16,6 +17,7 @@ import org.springframework.web.socket.messaging.SessionDisconnectEvent;
 public class WebSocketEventListener {
 
     private final OnlineUserService onlineUserService;
+    private final ChatService chatService;
 
     @EventListener
     public void handleWebSocketConnectListener(SessionConnectedEvent event) {
@@ -38,6 +40,7 @@ public class WebSocketEventListener {
             try {
                 Long userId = Long.parseLong(accessor.getUser().getName());
                 onlineUserService.removeOnlineUser(userId);
+                chatService.leave(userId);
                 log.info("STOMP user {} is offline", userId);
             } catch (Exception e) {
                 log.error("STOMP DISCONNECT msg:{}", e.getMessage());
