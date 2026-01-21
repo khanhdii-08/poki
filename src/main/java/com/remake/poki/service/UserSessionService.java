@@ -28,6 +28,7 @@ public class UserSessionService {
         session.setToken(token);
         session.setIpAddress(ipAddress);
         session.setActive(true);
+        session.setLastActivity(LocalDateTime.now());
         sessionRepository.save(session);
         log.info("[Session] Created new session for user {} on device {}", userId, deviceId);
     }
@@ -39,8 +40,6 @@ public class UserSessionService {
                         log.warn("[Session] Token mismatch for user {}. Logged in from another device.", userId);
                         return false;
                     }
-                    userSession.setLastActivity(LocalDateTime.now());
-                    sessionRepository.save(userSession);
                     return true;
                 }).orElse(false);
     }

@@ -4,13 +4,8 @@ import com.remake.poki.dto.ChatDTO;
 import com.remake.poki.dto.MessageDTO;
 import com.remake.poki.dto.UserDTO;
 import com.remake.poki.enums.MessageType;
-import com.remake.poki.handler.exceptions.NotFoundException;
-import com.remake.poki.handler.exceptions.UnauthorizedException;
-import com.remake.poki.i18n.I18nKeys;
-import com.remake.poki.mapper.UserMapper;
-import com.remake.poki.model.User;
-import com.remake.poki.repository.UserRepository;
-import com.remake.poki.utils.Utils;
+import com.remake.poki.security.SecurityUtils;
+import com.remake.poki.security.CustomUserDetails;
 import com.remake.poki.utils.WsTopics;
 import com.remake.poki.ws.WebSocketMessenger;
 import io.jsonwebtoken.lang.Objects;
@@ -29,22 +24,18 @@ public class ChatService {
 
     private final Map<Long, ChatDTO> chatMap = new ConcurrentHashMap<>();
 
-    private final UserRepository userRepository;
-    private final UserMapper userMapper;
     private final WebSocketMessenger messenger;
 
     public MessageDTO create(Long chatId) {
-        Long userId = Utils.getCurrentUserLogin().orElseThrow(() -> new UnauthorizedException(Utils.getMessage(I18nKeys.ERROR_UNAUTHORIZED)));
-        User user = userRepository.findById(userId).orElseThrow(() -> new NotFoundException(Utils.getMessage(I18nKeys.ERROR_NOT_FOUND)));
-        MessageDTO messageDTO = MessageDTO.builder().username(user.getUser()).build();
-        boolean exists = existUseInCurrentChat(chatId, userId);
+        CustomUserDetails userDetails = SecurityUtils.getCurrentUser();
+        boolean exists = existUseInCurrentChat(chatId, userDetails.getId());
         if (exists) {
-            return messageDTO;
+            return null;
         }
-        // Nếu user đang ở trong channel hiện tại thì send thông báo rời đi
-        leave(user);
-        UserDTO userDTO = userMapper.toDto(user);
+        leave(userDetails);
+        UserDTO userDTO = UserDTO.builder().id(userDetails.getId()).username(userDetails.getUser()).build();
         ChatDTO chatDTO = chatMap.get(chatId);
+        MessageDTO messageDTO = MessageDTO.builder().username(userDetails.getUser()).build();
         if (chatDTO != null) {
             chatDTO.getUsers().add(userDTO);
             messageDTO.setType(MessageType.JOIN);
@@ -65,32 +56,35 @@ public class ChatService {
                 && chatMap.get(chatId).getUsers().stream().anyMatch(u -> u.getId().equals(userId));
     }
 
-    public void leave(Long userId) {
-        User user = userRepository.findById(userId).orElseThrow(() -> new NotFoundException(Utils.getMessage(I18nKeys.ERROR_NOT_FOUND)));
-        leave(user);
-    }
-
-    public void leave(User user) {
+    public void leave(CustomUserDetails userDetails) {
         for (Map.Entry<Long, ChatDTO> entry : chatMap.entrySet()) {
             Long chatId = entry.getKey();
             ChatDTO chatDTO = entry.getValue();
-            boolean removed = chatDTO.getUsers().removeIf(u -> u.getId().equals(user.getId()));
+            boolean removed = chatDTO.getUsers().removeIf(u -> u.getId().equals(userDetails.getId()));
             if (removed) {
-                MessageDTO messageDTO = MessageDTO.builder().chatId(chatId).type(MessageType.LEAVE).username(user.getUser()).build();
+                MessageDTO messageDTO = MessageDTO.builder()
+                        .chatId(chatId).type(MessageType.LEAVE)
+                        .username(userDetails.getUser())
+                        .build();
                 messenger.send(WsTopics.CHAT + WsTopics.SLASH + chatId, messageDTO);
-                return;
+                break;
             }
         }
     }
 
     public MessageDTO send(Long chatId, MessageDTO messageDTO) {
-        Long userId = Utils.getCurrentUserLogin().orElseThrow(() -> new UnauthorizedException(Utils.getMessage(I18nKeys.ERROR_UNAUTHORIZED)));
-        User user = userRepository.findById(userId).orElseThrow(() -> new NotFoundException(Utils.getMessage(I18nKeys.ERROR_NOT_FOUND)));
+        CustomUserDetails userDetails = SecurityUtils.getCurrentUser();
+        boolean exists = existUseInCurrentChat(chatId, userDetails.getId());
+        if (!exists) {
+            return null;
+        }
         ChatDTO chatDTO = chatMap.get(chatId);
         if (chatDTO != null) {
-            messageDTO.setChatId(chatId);
-            messageDTO.setUsername(user.getUser());
-            messageDTO.setType(MessageType.MESSAGE);
+            messageDTO = MessageDTO.builder()
+                    .chatId(chatId).type(MessageType.CHAT)
+                    .username(userDetails.getUser())
+                    .content(messageDTO.getContent())
+                    .build();
             messenger.send(WsTopics.CHAT + WsTopics.SLASH + chatId, messageDTO);
         }
         return messageDTO;

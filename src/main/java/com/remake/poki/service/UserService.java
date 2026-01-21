@@ -4,12 +4,14 @@ import com.remake.poki.dto.AuthDTO;
 import com.remake.poki.dto.LoginDTO;
 import com.remake.poki.dto.UserDTO;
 import com.remake.poki.handler.exceptions.ApiException;
+import com.remake.poki.handler.exceptions.NotFoundException;
 import com.remake.poki.handler.exceptions.UnauthorizedException;
 import com.remake.poki.i18n.I18nKeys;
 import com.remake.poki.mapper.UserMapper;
 import com.remake.poki.model.User;
 import com.remake.poki.repository.UserRepository;
 import com.remake.poki.repository.VersionRepository;
+import com.remake.poki.security.CustomUserDetails;
 import com.remake.poki.security.TokenProvider;
 import com.remake.poki.utils.Utils;
 import jakarta.servlet.http.HttpServletRequest;
@@ -17,6 +19,7 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -33,6 +36,12 @@ public class UserService {
     private final UserSessionService userSessionService;
     private final UserMapper userMapper;
     private final TokenProvider tokenProvider;
+
+    @Transactional
+    public UserDetails loadUserById(Long id) {
+        User user = userRepository.findById(id).orElseThrow(() -> new NotFoundException(Utils.getMessage(I18nKeys.ERROR_NOT_FOUND)));
+        return new CustomUserDetails(user.getId(), user.getUser(), user.getPassword());
+    }
 
     @Transactional
     public AuthDTO login(LoginDTO request, HttpServletRequest httpRequest) {

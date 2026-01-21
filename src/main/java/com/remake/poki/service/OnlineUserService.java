@@ -1,11 +1,9 @@
 package com.remake.poki.service;
 
 import com.remake.poki.dto.OnlineUserDTO;
-import com.remake.poki.handler.exceptions.UnauthorizedException;
-import com.remake.poki.i18n.I18nKeys;
 import com.remake.poki.mapper.OnlineUserMapper;
 import com.remake.poki.repository.UserRepository;
-import com.remake.poki.utils.Utils;
+import com.remake.poki.security.SecurityUtils;
 import com.remake.poki.utils.WsTopics;
 import com.remake.poki.ws.WebSocketMessenger;
 import lombok.RequiredArgsConstructor;
@@ -44,7 +42,7 @@ public class OnlineUserService {
      * - Không phải chính user hiện tại
      */
     public List<OnlineUserDTO> getAvailableOnlineUsersExcludeCurrentUser() {
-        Long userId = Utils.getCurrentUserLogin().orElseThrow(() -> new UnauthorizedException(Utils.getMessage(I18nKeys.ERROR_UNAUTHORIZED)));
+        Long userId = SecurityUtils.getCurrentUserId();
         return getAvailableOnlineUsers(userId);
     }
 

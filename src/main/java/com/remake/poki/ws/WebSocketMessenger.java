@@ -17,24 +17,23 @@ public class WebSocketMessenger {
             String userId = String.valueOf(user);
             messagingTemplate.convertAndSendToUser(userId, destination, payload);
         } catch (Exception e) {
-            log.error("sendSyncToUser userId:{}, destination:{}, payload:{}", user, destination, payload, e);
+            log.error("SendToUser userId:{}, destination:{}, payload:{}", user, destination, payload, e);
         }
     }
 
     public synchronized void sendSyncToUser(Long user, String destination, Object payload) {
-        try {
-            String userId = String.valueOf(user);
-            messagingTemplate.convertAndSendToUser(userId, destination, payload);
-        } catch (Exception e) {
-            log.error("sendSyncToUser userId:{}, destination:{}, payload:{}", user, destination, payload, e);
-        }
+        sendToUser(user, destination, payload);
     }
 
     public void send(String destination, Object payload) {
         try {
             messagingTemplate.convertAndSend(destination, payload);
         } catch (Exception e) {
-            log.error("sendSyncToUser destination:{}, payload:{}", destination, payload, e);
+            log.error("Send destination:{}, payload:{}", destination, payload, e);
         }
+    }
+
+    public synchronized void sendSync(String destination, Object payload) {
+        send(destination, payload);
     }
 }
