@@ -14,8 +14,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
@@ -93,25 +91,14 @@ public class TokenProvider {
         return false;
     }
 
-    public Authentication getAuthentication(String token) {
-        /*
-         * Currently not use
-         * */
-//        Claims claims = getClaims(token);
-//        Collection<? extends GrantedAuthority> authorities = Arrays
-//                .stream(claims.get(Constants.AUTHORIZATION).toString().split(","))
-//                .filter(auth -> !auth.trim().isEmpty())
-//                .map(SimpleGrantedAuthority::new)
-//                .collect(Collectors.toList());
-//
-//        User principal = new User(claims.getSubject(), "", authorities);
-//        Principal principal = () -> String.valueOf(getUserIdFromToken(token));
-        return new UsernamePasswordAuthenticationToken(getUserIdFromToken(token), null, null);
-    }
-
     public Long getUserIdFromToken(String token) {
         Claims claims = getClaims(token);
         return Long.parseLong(claims.getSubject());
+    }
+
+    public String getUsernameFromToken(String token) {
+        Claims claims = getClaims(token);
+        return claims.get("username").toString();
     }
 
     private Claims getClaims(String token) {
