@@ -1,7 +1,12 @@
 package com.remake.poki.service;
 
+import com.remake.poki.dto.BaseDTO;
+import com.remake.poki.handler.exceptions.UnauthorizedException;
+import com.remake.poki.i18n.I18nKeys;
 import com.remake.poki.model.UserSession;
 import com.remake.poki.repository.UserSessionRepository;
+import com.remake.poki.security.SecurityUtils;
+import com.remake.poki.utils.Utils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -42,5 +47,21 @@ public class UserSessionService {
                     }
                     return true;
                 }).orElse(false);
+    }
+
+    @Transactional
+    public BaseDTO logout() {
+        Long userId = SecurityUtils.getCurrentUserId();
+        if (userId == null) throw new UnauthorizedException(Utils.getMessage(I18nKeys.ERROR_NOT_LOGGED_IN));
+        try {
+            sessionRepository.findByUserIdAndIsActiveTrue(userId)
+                    .ifPresent(entity -> {
+                        entity.setActive(false);
+                        sessionRepository.save(entity);
+                    });
+            return new BaseDTO(Utils.getMessage(I18nKeys.LOGOUT_SUCCESS));
+        } catch (Exception e) {
+            return new BaseDTO(Utils.getMessage(I18nKeys.FAILURE));
+        }
     }
 }
