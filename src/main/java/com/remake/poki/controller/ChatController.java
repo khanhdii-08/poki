@@ -18,12 +18,12 @@ public class ChatController extends BaseController {
 
     private final ChatService chatService;
 
-    @PostMapping(root + V1 + "/create")
+    @PostMapping(V1 + root + "/create")
     public MessageDTO create(@Valid @RequestBody ChatDTO chatDTO) {
         return chatService.create(chatDTO.getChatId());
     }
 
-    @PostMapping(root + V1 + "/send/{chatId}")
+    @PostMapping(V1 + root + "/send/{chatId}")
     public MessageDTO send(@PathVariable Long chatId, @Valid @RequestBody MessageDTO messageDTO) {
         return chatService.send(chatId, messageDTO);
     }

@@ -12,4 +12,6 @@ public interface UserSessionRepository extends JpaRepository<UserSession, Long> 
     Optional<UserSession> findByUserId(Long userId);
 
     Optional<UserSession> findByUserIdAndIsActiveTrue(Long userId);
+
+
 }

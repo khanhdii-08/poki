@@ -1,17 +1,25 @@
 package com.remake.poki.service;
 
 import com.remake.poki.dto.AuthDTO;
+import com.remake.poki.dto.BaseDTO;
+import com.remake.poki.dto.DeductGoldDTO;
 import com.remake.poki.dto.LoginDTO;
+import com.remake.poki.dto.UpdateStarDTO;
 import com.remake.poki.dto.UserDTO;
+import com.remake.poki.dto.UserRoomDTO;
 import com.remake.poki.handler.exceptions.ApiException;
 import com.remake.poki.handler.exceptions.NotFoundException;
 import com.remake.poki.handler.exceptions.UnauthorizedException;
 import com.remake.poki.i18n.I18nKeys;
+import com.remake.poki.mapper.CardMapper;
 import com.remake.poki.mapper.UserMapper;
+import com.remake.poki.model.Card;
 import com.remake.poki.model.User;
+import com.remake.poki.repository.CardRepository;
 import com.remake.poki.repository.UserRepository;
 import com.remake.poki.repository.VersionRepository;
 import com.remake.poki.security.CustomUserDetails;
+import com.remake.poki.security.SecurityUtils;
 import com.remake.poki.security.TokenProvider;
 import com.remake.poki.utils.Utils;
 import jakarta.servlet.http.HttpServletRequest;
@@ -24,6 +32,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.List;
 
 @Slf4j
 @Service
@@ -31,11 +40,13 @@ import java.time.temporal.ChronoUnit;
 public class UserService {
     private static final int ENERGY_REGEN_MINUTES = 8;
 
+    private final UserSessionService userSessionService;
     private final VersionRepository versionRepository;
     private final UserRepository userRepository;
-    private final UserSessionService userSessionService;
-    private final UserMapper userMapper;
+    private final CardRepository cardRepository;
     private final TokenProvider tokenProvider;
+    private final UserMapper userMapper;
+    private final CardMapper cardMapper;
 
     @Transactional
     public UserDetails loadUserById(Long id) {
@@ -132,5 +143,88 @@ public class UserService {
             secondsRemaining = secondsPerRegen;
         }
         return secondsRemaining;
+    }
+
+    public UserDTO findByUserName(String username) {
+        User user = userRepository.findByUser(username).orElse(null);
+        return userMapper.toDto(user);
+    }
+
+    public UserDTO getUser() {
+        Long userId = SecurityUtils.getCurrentUserId();
+        return userRepository.findById(userId)
+                .map(userMapper::toDto)
+                .orElseThrow(() -> new NotFoundException(Utils.getMessage(I18nKeys.ERROR_NOT_FOUND)));
+    }
+
+    public UserRoomDTO getInfoRoom(Long enemyPetId) {
+        Long userId = SecurityUtils.getCurrentUserId();
+        UserRoomDTO userRoomDTO = userRepository.findInfoRoom(userId, enemyPetId);
+        if (userRoomDTO == null) {
+            userRoomDTO = userRepository.findInfoRoomHT(userId, enemyPetId);
+        }
+        List<Card> cards = cardRepository.findAllByUserId(userId);
+        userRoomDTO.setCards(cardMapper.toDTO(cards));
+        return userRoomDTO;
+    }
+
+    public BaseDTO downEnergy() {
+        Long userId = SecurityUtils.getCurrentUserId();
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new NotFoundException(Utils.getMessage(I18nKeys.ERROR_NOT_FOUND)));
+        user.setEnergy(user.getEnergy() - 1);
+        if (user.getEnergy() <= 0) {
+            user.setEnergy(0);
+        }
+        userRepository.save(user);
+        return new BaseDTO(Utils.getMessage(I18nKeys.SUCCESS));
+    }
+
+    public BaseDTO upCT(int requestAttack) {
+        Long userId = SecurityUtils.getCurrentUserId();
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new NotFoundException(Utils.getMessage(I18nKeys.ERROR_NOT_FOUND)));
+        user.setRequestAttack(user.getRequestAttack() + requestAttack);
+        userRepository.save(user);
+        return new BaseDTO(Utils.getMessage(I18nKeys.SUCCESS));
+    }
+
+
+    public BaseDTO deductGold(DeductGoldDTO request) {
+        Long userId = SecurityUtils.getCurrentUserId();
+        User user = userRepository.findById(userId).orElseThrow(() -> new NotFoundException(Utils.getMessage(I18nKeys.ERROR_NOT_FOUND)));
+        if (user.getGold() < request.getAmount()) {
+            return new BaseDTO(false, Utils.getMessage(I18nKeys.ERROR_INSUFFICIENT_GOLD), user.getGold());
+        }
+        int newGold = user.getGold() - request.getAmount();
+        user.setGold(newGold);
+        userRepository.save(user);
+        return new BaseDTO(true, Utils.getMessage(I18nKeys.SUCCESS_GOLD_DEDUCTED, request.getAmount()), newGold);
+    }
+
+    @Transactional
+    public BaseDTO updateStar(UpdateStarDTO request) {
+        Long userId = SecurityUtils.getCurrentUserId();
+        User user = userRepository.findById(userId).orElseThrow(() -> new NotFoundException(Utils.getMessage(I18nKeys.ERROR_NOT_FOUND)));
+
+        switch (request.getStarType().toLowerCase()) {
+            case "white":
+                user.setStarWhite(user.getStarWhite() + request.getAmount());
+                break;
+            case "blue":
+                user.setStarBlue(user.getStarBlue() + request.getAmount());
+                break;
+            case "red":
+                user.setStarRed(user.getStarRed() + request.getAmount());
+                break;
+            default:
+                return new BaseDTO(false, Utils.getMessage(I18nKeys.ERROR_INVALID_STAR_TYPE, request.getStarType()));
+        }
+
+        user = userRepository.save(user);
+        request.setStarWhite(user.getStarWhite());
+        request.setStarBlue(user.getStarBlue());
+        request.setStarRed(user.getStarRed());
+        return new BaseDTO(Utils.getMessage(I18nKeys.SUCCESS), request);
     }
 }
