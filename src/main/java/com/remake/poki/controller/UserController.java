@@ -38,7 +38,7 @@ public class UserController extends BaseController {
     }
 
     @PostMapping(V1 + root + "/room/{enemyPetId}")
-    public ResponseEntity<?> getInfoRoom(@PathVariable() Long enemyPetId) {
+    public ResponseEntity<?> getInfoRoom(@PathVariable("enemyPetId") Long enemyPetId) {
         return ResponseEntity.ok(userService.getInfoRoom(enemyPetId));
     }
 
@@ -53,7 +53,7 @@ public class UserController extends BaseController {
     }
 
     @PostMapping(V1 + root + "/ct/{requestAttack}")
-    public ResponseEntity<?> upCT(@PathVariable() int requestAttack) {
+    public ResponseEntity<?> upCT(@PathVariable("requestAttack") int requestAttack) {
         return ResponseEntity.ok(userService.upCT(requestAttack));
     }
 
